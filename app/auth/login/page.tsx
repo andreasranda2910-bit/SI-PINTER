@@ -1,12 +1,9 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Shield, Eye, EyeOff, LogIn } from 'lucide-react'
 
 export default function LoginPage() {
-  const router = useRouter()
-  const supabase = createClient()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -17,24 +14,31 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    
+    const supabase = createClient()
+    const { data, error } = await supabase.auth.signInWithPassword({ 
+      email, 
+      password 
+    })
+    
     if (error) {
-      setError('Email atau password salah. Silakan coba lagi.')
+      setError('Email atau password salah: ' + error.message)
       setLoading(false)
+      return
+    }
+
+    if (data.session) {
+      // Gunakan window.location untuk hard redirect
+      window.location.href = '/dashboard'
     } else {
-      router.push('/dashboard')
-      router.refresh()
+      setError('Login gagal, session tidak terbentuk')
+      setLoading(false)
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1a3a5c] via-[#1e4d7a] to-[#1a3a5c] px-4">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-5"
-        style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-
       <div className="relative w-full max-w-md">
-        {/* Header kartu */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl shadow-lg mb-4">
             <Shield className="w-10 h-10 text-[#1a3a5c]" />
@@ -44,7 +48,6 @@ export default function LoginPage() {
           <p className="text-blue-300 text-xs mt-0.5">Irban V — Inspektorat Kab. Sumba Barat</p>
         </div>
 
-        {/* Form */}
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-6">Masuk ke Sistem</h2>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -77,7 +80,9 @@ export default function LoginPage() {
               </div>
             </div>
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">{error}</div>
+              <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">
+                {error}
+              </div>
             )}
             <button type="submit" disabled={loading}
               className="btn-primary w-full flex items-center justify-center gap-2 py-3 mt-2">
@@ -94,7 +99,6 @@ export default function LoginPage() {
             Belum punya akun? Hubungi Administrator SI PINTER
           </p>
         </div>
-
         <p className="text-center text-blue-300 text-xs mt-6">
           © 2025 Irban V Inspektorat Kabupaten Sumba Barat
         </p>
